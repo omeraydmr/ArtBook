@@ -25,6 +25,8 @@ import com.google.android.material.snackbar.Snackbar;
 import com.omeraydmr.artbook.databinding.ActivityArtBinding;
 import com.omeraydmr.artbook.databinding.ActivityMainBinding;
 
+import java.io.ByteArrayOutputStream;
+
 public class ArtActivity extends AppCompatActivity {
 
     private ActivityArtBinding binding;
@@ -38,10 +40,45 @@ public class ArtActivity extends AppCompatActivity {
         binding = ActivityArtBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
+
+        registerLauncher();
+
+
     }
 
     public void save(View view) {
 
+        String name = binding.nameText.getText().toString();
+        String artistName = binding.artistText.getText().toString();
+        String year = binding.yearText.getText().toString();
+
+        Bitmap smallImage = makeSmallerImage(selectedImage,300);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        smallImage.compress(Bitmap.CompressFormat.PNG, 50, outputStream);
+        byte[] byteArray = outputStream.toByteArray();
+
+    }
+
+    public Bitmap makeSmallerImage(Bitmap image, int maxSize) {
+
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        float bitmapRatio = (float)width/(float)height;
+
+        if(bitmapRatio>1){
+            //landscape image
+            width = maxSize;
+            height = (int)(width/bitmapRatio);
+        }
+        else{
+            //portrait image
+            height = maxSize;
+            width = (int)(height*bitmapRatio);
+        }
+
+        return image.createScaledBitmap(image, width, height, true);
     }
 
     public void selectImage(View view) {
@@ -54,12 +91,13 @@ public class ArtActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View view) {
                         //request permission
-
+                        permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
                     }
                 }).show();
             }
             else {
                 //request permission
+                permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
             }
 
 
@@ -67,11 +105,12 @@ public class ArtActivity extends AppCompatActivity {
         else {
             //gallery
             Intent intentToGallery = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            activityResultLauncher.launch(intentToGallery);
 
         }
     }
 
-    private void registeLauncher() {
+    private void registerLauncher() {
 
         activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
             @Override
@@ -108,6 +147,7 @@ public class ArtActivity extends AppCompatActivity {
                 if (result) {
                     //permission granted
                     Intent intentToGallery = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    activityResultLauncher.launch(intentToGallery);
                 }
                 else {
                     //permission denied
