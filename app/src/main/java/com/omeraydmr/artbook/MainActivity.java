@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
 
         if(item .getItemId() == R.id.add_art) {
             Intent intent = new Intent(this, ArtActivity.class);
+            intent.putExtra("info", "new");
             startActivity(intent);
 
         }

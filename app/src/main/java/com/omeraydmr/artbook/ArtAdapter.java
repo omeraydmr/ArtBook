@@ -1,5 +1,7 @@
 package com.omeraydmr.artbook;
 
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,8 +29,17 @@ public class ArtAdapter extends RecyclerView.Adapter<ArtAdapter.ArtHolder> {
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ArtHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ArtHolder holder, @SuppressLint("RecyclerView") int position) {
         holder.binding.recyclerViewTextView.setText(artArrayList.get(position).name);
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(holder.itemView.getContext(), ArtActivity.class);
+                intent.putExtra("info", "old");
+                intent.putExtra("artId", artArrayList.get(position).id);
+                holder.itemView.getContext().startActivity(intent);
+            }
+        });
 
     }
 

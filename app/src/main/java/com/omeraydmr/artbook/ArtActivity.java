@@ -12,9 +12,11 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageDecoder;
 import android.net.Uri;
 import android.os.Build;
@@ -46,12 +48,55 @@ public class ArtActivity extends AppCompatActivity {
 
         registerLauncher();
 
+        database = this.openOrCreateDatabase("Arts", MODE_PRIVATE, null);
+
+        Intent intent = new Intent();
+        String info = intent.getStringExtra("info");
+
+        if(info.equals("new")){
+            //new art
+            binding.nameText.setText("");
+            binding.artistText.setText("");
+            binding.yearText.setText("");
+            binding.save.setVisibility(View.VISIBLE);
+
+            Bitmap selectImage = BitmapFactory.decodeResource(getApplicationContext().getResources(),R.drawable.select);
+            binding.imageView.setImageBitmap(selectImage);
+        }
+        else {
+            //old art
+            int artId = intent.getIntExtra("artId", 1);
+            binding.save.setVisibility(View.INVISIBLE);
+
+            try {
+                Cursor cursor = database.rawQuery("SELECT * FROM arts WHERE id = ?", new String[] {String.valueOf(artId)});
+                int artNameIndex = cursor.getColumnIndex("artname");
+                int painterNameIndex = cursor.getColumnIndex("paintername");
+                int yearIndex = cursor.getColumnIndex("year");
+                int imageIndex = cursor.getColumnIndex("image");
+
+                while (cursor.moveToNext()) {
+                    binding.nameText.setText(cursor.getString(artNameIndex));
+                    binding.artistText.setText(cursor.getString(painterNameIndex));
+                    binding.yearText.setText(cursor.getString(yearIndex));
+
+                    byte[] bytes = cursor.getBlob(imageIndex);
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                    binding.imageView.setImageBitmap(bitmap);
+                }
+
+                cursor.close();
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
 
     }
 
     public void save(View view) {
 
-        String name = binding.nameText.getText().toString();
+        String artName = binding.nameText.getText().toString();
         String artistName = binding.artistText.getText().toString();
         String year = binding.yearText.getText().toString();
 
@@ -63,13 +108,13 @@ public class ArtActivity extends AppCompatActivity {
 
         try {
 
-            database = this.openOrCreateDatabase("Arts", MODE_PRIVATE, null);
+
             database.execSQL("CREATE TABLE IF NOT EXISTS arts(id INTEGER PRIMARY KEY, artname VARCHAR, paintername VARCHAR, year varchar, image BLOB)");
 
             String sqlString = "INSERT INTO arts(artname, paintername, year, image) VALUES(?, ?, ?, ?)";
 
             SQLiteStatement sqLiteStatement = database.compileStatement(sqlString);
-            sqLiteStatement.bindString(1,name);
+            sqLiteStatement.bindString(1,artName);
             sqLiteStatement.bindString(2,artistName);
             sqLiteStatement.bindString(3,year);
             sqLiteStatement.bindBlob(4, byteArray);
